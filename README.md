@@ -34,8 +34,11 @@ thx \
 ```
 
 Parameters:
+
 - `$BUGOUT_ACCESS_TOKEN`: You can get an access token for your Bugout account at https://bugout.dev/account/tokens.
+
 - `$BUGOUT_JOURNAL_ID`: This is the Bugout journal from which you want to synchronize events into Segment.
+
 - `$SEGMENT_WRITE_KEY`: Create a new source at https://app.segment.com. This is the write key associated with that source.
 
 ## Cursors
