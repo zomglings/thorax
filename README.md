@@ -43,8 +43,9 @@ Parameters:
 
 ## Cursors
 
-`thx` will print out cursors to the last processed event. If for some reason your job gets interrupted, you can pass
-the most recent cursor when you restart the job using the `-cursor` argument.
+`thx` will print out cursors to the last processed event. If you want to process all events since your
+last synchronization or if for some reason your job gets interrupted, you can pass the most recent
+cursor when you restart the job using the `-cursor` argument.
 
 For example:
 ```bash
