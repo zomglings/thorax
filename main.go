@@ -16,6 +16,8 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
+const Version = "0.0.1"
+
 func main() {
 	consent := humbug.CreateHumbugConsent(humbug.EnvironmentVariableConsent("THORAX_REPORTING_ENABLED", humbug.Yes, false))
 	clientID := os.Getenv("THORAX_EMAIL")
@@ -39,7 +41,7 @@ func main() {
 
 	var segmentWriteKey, bugoutToken, bugoutJournalID, cursor string
 	var batchSize, timeout int
-	var debug bool
+	var checkVersion, debug bool
 	flag.StringVar(&segmentWriteKey, "segment", "", "Segment write key (get one by creating a source at https://segment.com)")
 	flag.StringVar(&bugoutToken, "token", "", "Bugout access token (create one at https://bugout.dev/account/tokens)")
 	flag.StringVar(&bugoutJournalID, "journal", "", "Bugout journal ID to load events from")
@@ -47,7 +49,13 @@ func main() {
 	flag.IntVar(&batchSize, "N", 1000, "Number of reports to process per iteration")
 	flag.IntVar(&timeout, "s", 0, "Number of seconds to wait between Bugout requests")
 	flag.BoolVar(&debug, "debug", false, "Set this to true to run in debug mode")
+	flag.BoolVar(&checkVersion, "version", false, "Run with this flag to see the current Thorax version and immediately exit")
 	flag.Parse()
+
+	if checkVersion {
+		fmt.Println(Version)
+		os.Exit(0)
+	}
 
 	if segmentWriteKey == "" {
 		panic("Please pass a segment write key using the -segment option.")
