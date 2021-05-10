@@ -16,7 +16,7 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
-const Version = "0.0.4"
+const Version = "0.0.5"
 
 func main() {
 	consent := humbug.CreateHumbugConsent(humbug.EnvironmentVariableConsent("THORAX_REPORTING_ENABLED", humbug.Yes, false))
@@ -140,6 +140,8 @@ func reportsIterator(client bugout.BugoutClient, token, journalID, cursor string
 func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 	for _, entry := range entries {
 		entryProperties := analytics.NewProperties()
+		link := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(entry.Url, "http://", "https://"), "spire.bugout.dev", "bugout.dev"), "/journals/", "app/public")
+		entryProperties.Set("link", link)
 		clientID := "unknown"
 		username := ""
 		for _, tag := range entry.Tags {
