@@ -16,7 +16,7 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
-const Version = "0.0.3"
+const Version = "0.0.4"
 
 func main() {
 	consent := humbug.CreateHumbugConsent(humbug.EnvironmentVariableConsent("THORAX_REPORTING_ENABLED", humbug.Yes, false))
