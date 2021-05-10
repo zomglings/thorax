@@ -140,7 +140,7 @@ func reportsIterator(client bugout.BugoutClient, token, journalID, cursor string
 func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 	for _, entry := range entries {
 		entryProperties := analytics.NewProperties()
-		link := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(entry.Url, "http://", "https://"), "spire.bugout.dev", "bugout.dev"), "/journals/", "app/public")
+		link := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(entry.Url, "http://", "https://"), "spire.bugout.dev", "bugout.dev"), "/journals/", "/app/public/")
 		entryProperties.Set("link", link)
 		clientID := "unknown"
 		username := ""
