@@ -140,22 +140,35 @@ func reportsIterator(client bugout.BugoutClient, token, journalID, cursor string
 func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 	for _, entry := range entries {
 		entryProperties := analytics.NewProperties()
-		sessionID := "unknown"
+		clientID := "unknown"
+		username := ""
 		for _, tag := range entry.Tags {
 			components := strings.SplitN(tag, ":", 2)
 			if len(components) < 2 {
 				entryProperties.Set(tag, true)
 			} else {
 				entryProperties.Set(components[0], components[1])
-				if components[0] == "session" {
-					sessionID = components[1]
+				if components[0] == "client" {
+					clientID = components[1]
+				} else if components[0] == "username" {
+					username = components[1]
 				}
+			}
+		}
+
+		if clientID != "unknown" && username != "" {
+			identificationErr := client.Enqueue(analytics.Identify{
+				UserId: clientID,
+				Traits: analytics.NewTraits().SetUsername(username),
+			})
+			if identificationErr != nil {
+				panic(identificationErr)
 			}
 		}
 
 		err := client.Enqueue(analytics.Track{
 			Event:      entry.Title,
-			UserId:     sessionID,
+			UserId:     clientID,
 			Properties: entryProperties,
 		})
 		if err != nil {
