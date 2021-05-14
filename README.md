@@ -58,8 +58,25 @@ thx \
     -cursor "2021-03-15:29:28.171994+00:00"
 ```
 
+You can synchronize cursors to your Bugout journal. Just add a `-cursorname <name>` flag to the `thx`
+invocation. If you do this, you do not need to set `-cursor`. The most recent cursor with the given `<name>`
+will automatically be used as a checkpoint.
+
 ## Getting help
 
 - [Create an issue](https://github.com/zomglings/thorax/issues/new)
 
 - [Ask us on Bugout Slack](https://join.slack.com/t/bugout-dev/shared_invite/zt-fhepyt87-5XcJLy0iu702SO_hMFKNhQ)
+
+
+Please consider enabling crash reports. To do so, set the following environment variables when
+you run `thx`:
+
+```bash
+export THORAX_REPORTING_ENABLED=yes
+export THORAX_EMAIL=<your email>
+```
+
+- - -
+
+Note: This is not an official Bugout product.
