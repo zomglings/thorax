@@ -16,7 +16,7 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
-const Version = "0.1.0"
+const Version = "0.1.1"
 
 const cursorSchema = "v1"
 
@@ -109,7 +109,7 @@ func main() {
 	halt := false
 	offset := 0
 	for {
-		results, err := reportsIterator(bugoutClient, bugoutToken, bugoutJournalID, cursor, batchSize, offset)
+		results, err := reportsIterator(bugoutClient, bugoutToken, bugoutJournalID, newCursor, batchSize, offset)
 		if err != nil {
 			panic(err)
 		}
@@ -180,10 +180,11 @@ func writeCursorToJournal(client bugout.BugoutClient, token, journalID, cursorNa
 }
 
 func reportsIterator(client bugout.BugoutClient, token, journalID, cursor string, limit, offset int) (spire.EntryResultsPage, error) {
-	var query string = ""
+	var query string = "!tag:type:cursor"
 	if cursor != "" {
 		cleanedCursor := cleanTimestamp(cursor)
-		query = fmt.Sprintf("created_at:>%s", cleanedCursor)
+		query = fmt.Sprintf("%s created_at:>%s", query, cleanedCursor)
+		fmt.Println("query:", query)
 	}
 	parameters := map[string]string{
 		"order":   "asc",
