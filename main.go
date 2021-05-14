@@ -18,6 +18,8 @@ var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
 const Version = "0.0.6"
 
+const cursorSchema = "v1"
+
 func main() {
 	consent := humbug.CreateHumbugConsent(humbug.EnvironmentVariableConsent("THORAX_REPORTING_ENABLED", humbug.Yes, false))
 	clientID := os.Getenv("THORAX_EMAIL")
@@ -39,13 +41,14 @@ func main() {
 	report := humbug.SystemReport()
 	reporter.Publish(report)
 
-	var segmentWriteKey, bugoutToken, bugoutJournalID, cursor string
+	var segmentWriteKey, bugoutToken, bugoutJournalID, cursorName, cursor string
 	var batchSize, timeout int
 	var checkVersion, debug bool
 	flag.StringVar(&segmentWriteKey, "segment", "", "Segment write key (get one by creating a source at https://segment.com)")
 	flag.StringVar(&bugoutToken, "token", "", "Bugout access token (create one at https://bugout.dev/account/tokens)")
 	flag.StringVar(&bugoutJournalID, "journal", "", "Bugout journal ID to load events from")
-	flag.StringVar(&cursor, "cursor", "", "(Optional) cursor from which to start loading items")
+	flag.StringVar(&cursorName, "cursorname", "", "Name of cursor to use for the job")
+	flag.StringVar(&cursor, "cursor", "", "Cursor to use for job (if specified, we do not retrive state of cursor from journal)")
 	flag.IntVar(&batchSize, "N", 1000, "Number of reports to process per iteration")
 	flag.IntVar(&timeout, "s", 0, "Number of seconds to wait between Bugout requests")
 	flag.BoolVar(&debug, "debug", false, "Set this to true to run in debug mode")
@@ -92,6 +95,16 @@ func main() {
 	}
 	defer segmentClient.Close()
 
+	if cursorName != "" && cursor == "" {
+		fmt.Printf("Loading cursor (cursorname=%s) from journal...\n", cursorName)
+		journalCursor, cursorErr := getCursorFromJournal(bugoutClient, bugoutToken, bugoutJournalID, cursorName)
+		if cursorErr != nil {
+			panic(fmt.Errorf("Error retrieving cursor (cursorname=%s) from Bugout:\n%s\n", cursorName, err.Error()))
+		}
+		cursor = journalCursor
+		fmt.Printf("Loaded cursor with cursorname=%s: %s", cursorName, cursor)
+	}
+
 	newCursor := cursor
 	halt := false
 	offset := 0
@@ -110,6 +123,13 @@ func main() {
 			halt = true
 		}
 		newCursor = loadToSegment(segmentClient, results.Results)
+		if cursorName != "" {
+			fmt.Printf("Writing cursor (%s) to journal with cursorname=%s\n", newCursor, cursorName)
+			writeCursorErr := writeCursorToJournal(bugoutClient, bugoutToken, bugoutJournalID, cursorName, newCursor)
+			if writeCursorErr != nil {
+				fmt.Printf("[WARNING] Could not write cursor (cursorname=%s) to Bugout:\n%s\n", cursorName, writeCursorErr.Error())
+			}
+		}
 		fmt.Printf("New cursor: %s\n", newCursor)
 		if halt {
 			break
@@ -122,6 +142,41 @@ func main() {
 
 func cleanTimestamp(rawTimestamp string) string {
 	return strings.ReplaceAll(rawTimestamp, " ", "T")
+}
+
+func getCursorFromJournal(client bugout.BugoutClient, token, journalID, cursorName string) (string, error) {
+	query := fmt.Sprintf("type:cursor context_type:thorax cursor_schema:%s cursor:%s", cursorSchema, cursorName)
+	parameters := map[string]string{
+		"order":   "desc",
+		"content": "true", // We may use the content in the future, even though we are simply using context_url right now
+	}
+	results, err := client.Spire.SearchEntries(token, journalID, query, 1, 0, parameters)
+	if err != nil {
+		return "", err
+	}
+
+	if results.TotalResults == 0 {
+		return "", nil
+	}
+
+	return results.Results[0].ContextUrl, nil
+}
+
+func writeCursorToJournal(client bugout.BugoutClient, token, journalID, cursorName, cursor string) error {
+	title := fmt.Sprintf("thorax cursor: %s", cursorName)
+	entryContext := spire.EntryContext{
+		ContextType: "thorax",
+		ContextID:   cursor,
+		ContextURL:  cursor,
+	}
+	tags := []string{
+		"type:cursor",
+		fmt.Sprintf("cursor_schema:%s", cursorSchema),
+		fmt.Sprintf("cursor:%s", cursorName),
+		fmt.Sprintf("thorax_version:%s", Version),
+	}
+	_, err := client.Spire.CreateEntry(token, journalID, title, cursor, tags, entryContext)
+	return err
 }
 
 func reportsIterator(client bugout.BugoutClient, token, journalID, cursor string, limit, offset int) (spire.EntryResultsPage, error) {
