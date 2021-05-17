@@ -16,7 +16,7 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
-const Version = "0.1.2"
+const Version = "0.1.3"
 
 const cursorSchema = "v1"
 
@@ -109,7 +109,7 @@ func main() {
 	halt := false
 	offset := 0
 	for {
-		results, err := reportsIterator(bugoutClient, bugoutToken, bugoutJournalID, newCursor, batchSize, offset)
+		results, err := reportsIterator(bugoutClient, bugoutToken, bugoutJournalID, cursor, batchSize, offset)
 		if err != nil {
 			panic(err)
 		}
@@ -123,14 +123,14 @@ func main() {
 			halt = true
 		}
 		newCursor = loadToSegment(segmentClient, results.Results)
-		if cursorName != "" {
+		fmt.Printf("New cursor: %s\n", newCursor)
+		if cursorName != "" && newCursor != "" {
 			fmt.Printf("Writing cursor (%s) to journal with cursorname=%s\n", newCursor, cursorName)
 			writeCursorErr := writeCursorToJournal(bugoutClient, bugoutToken, bugoutJournalID, cursorName, newCursor)
 			if writeCursorErr != nil {
 				fmt.Printf("[WARNING] Could not write cursor (cursorname=%s) to Bugout:\n%s\n", cursorName, writeCursorErr.Error())
 			}
 		}
-		fmt.Printf("New cursor: %s\n", newCursor)
 		if halt {
 			break
 		} else {
@@ -232,6 +232,9 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 		if err != nil {
 			panic(err)
 		}
+	}
+	if len(entries) == 0 {
+		return ""
 	}
 	return cleanTimestamp(entries[len(entries)-1].CreatedAt)
 }
