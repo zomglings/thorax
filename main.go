@@ -16,7 +16,7 @@ import (
 
 var thoraxReporterToken string = "357c7247-5f6e-4f16-83f1-6ae95dadc6ff"
 
-const Version = "0.1.3"
+const Version = "0.1.4"
 
 const cursorSchema = "v1"
 
