@@ -145,7 +145,7 @@ func cleanTimestamp(rawTimestamp string) string {
 }
 
 func getCursorFromJournal(client bugout.BugoutClient, token, journalID, cursorName string) (string, error) {
-	query := fmt.Sprintf("type:cursor context_type:thorax cursor_schema:%s cursor:%s", cursorSchema, cursorName)
+	query := fmt.Sprintf("context_type:thorax tag:type:cursor tag:cursor_schema:%s tag:cursor:%s", cursorSchema, cursorName)
 	parameters := map[string]string{
 		"order":   "desc",
 		"content": "true", // We may use the content in the future, even though we are simply using context_url right now
@@ -224,10 +224,17 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 			}
 		}
 
+		cleanedCreatedAt := cleanTimestamp(entry.CreatedAt)
+		timestamp, timestampParseErr := time.Parse(time.RFC3339, cleanedCreatedAt)
+		if timestampParseErr != nil {
+			fmt.Printf("WARNING: Could not parse time (%s) using layout string (%s)\n", cleanedCreatedAt, time.RFC3339)
+		}
+
 		err := client.Enqueue(analytics.Track{
 			Event:      entry.Title,
 			UserId:     clientID,
 			Properties: entryProperties,
+			Timestamp:  timestamp,
 		})
 		if err != nil {
 			panic(err)
