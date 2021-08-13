@@ -199,7 +199,7 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 		link := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(entry.Url, "http://", "https://"), "spire.bugout.dev", "bugout.dev"), "/journals/", "/app/personal/")
 		entryProperties.Set("link", link)
 		clientID := "unknown"
-		username := ""
+		username := "__unknown__"
 		for _, tag := range entry.Tags {
 			components := strings.SplitN(tag, ":", 2)
 			if len(components) < 2 {
@@ -214,7 +214,7 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 			}
 		}
 
-		if clientID != "unknown" && username != "" {
+		if clientID != "unknown" {
 			identificationErr := client.Enqueue(analytics.Identify{
 				UserId: clientID,
 				Traits: analytics.NewTraits().SetUsername(username),
