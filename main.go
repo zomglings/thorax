@@ -9,6 +9,8 @@ import (
 
 	bugout "github.com/bugout-dev/bugout-go/pkg"
 	spire "github.com/bugout-dev/bugout-go/pkg/spire"
+	humbug "github.com/bugout-dev/humbug/go/pkg"
+	"github.com/google/uuid"
 	"github.com/segmentio/analytics-go"
 )
 
