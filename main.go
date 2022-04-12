@@ -9,8 +9,6 @@ import (
 
 	bugout "github.com/bugout-dev/bugout-go/pkg"
 	spire "github.com/bugout-dev/bugout-go/pkg/spire"
-	humbug "github.com/bugout-dev/humbug/go/pkg"
-	"github.com/google/uuid"
 	"github.com/segmentio/analytics-go"
 )
 
@@ -200,11 +198,16 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 		entryProperties.Set("link", link)
 		clientID := "unknown"
 		username := "__unknown__"
+		listOfParameters := []string{}
 		for _, tag := range entry.Tags {
 			components := strings.SplitN(tag, ":", 2)
 			if len(components) < 2 {
 				entryProperties.Set(tag, true)
 			} else {
+				if components[0] == "parameter" {
+					listOfParameters = append(listOfParameters, components[1])
+					continue
+				}
 				entryProperties.Set(components[0], components[1])
 				if components[0] == "client" {
 					clientID = components[1]
@@ -212,6 +215,10 @@ func loadToSegment(client analytics.Client, entries []spire.Entry) string {
 					username = components[1]
 				}
 			}
+		}
+
+		if listOfParameters != nil { // If there are parameters, join them into a single string 
+			entryProperties.Set("parameters", strings.Join(listOfParameters, ", "))
 		}
 
 		if clientID != "unknown" {
