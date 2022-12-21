@@ -76,7 +76,3 @@ you run `thx`:
 export THORAX_REPORTING_ENABLED=yes
 export THORAX_EMAIL=<your email>
 ```
-
-- - -
-
-Note: This is not an official Bugout product.
